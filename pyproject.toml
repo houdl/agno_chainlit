@@ -1,0 +1,18 @@
+[project]
+name = "agno-chainlit"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "agno>=1.3.3",
+    "boto3>=1.37.36",
+    "chainlit>=2.5.5",
+    "duckduckgo-search>=8.0.1",
+    "fastapi>=0.115.12",
+    "httpx[socks]>=0.28.1",
+    "openai>=1.75.0",
+    "sqlalchemy>=2.0.40",
+    "uvicorn>=0.34.1",
+    "yfinance>=0.2.55",
+]
