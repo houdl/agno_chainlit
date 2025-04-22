@@ -2,9 +2,14 @@
 
 ## Setup Instructions
 
-1. Install dependencies using uv:
+1. Install dependencies using uv and node version:
 ```bash
 uv sync
+```
+
+use node version 18 from .nvmrc
+```
+nvm use
 ```
 
 2. Set up environment variables:
