@@ -33,11 +33,18 @@ def create_mcp_client():
 
     default_env = get_default_environment()
     current_dir = os.path.abspath(os.path.dirname(__file__))
-    file_path = str(Path(__file__).parent)
+    env = {
+        **os.environ,
+        "APPSAMURAI_API_KEY": os.getenv("APPSAMURAI_API_KEY"),
+        "POSTGRES_DATABASE": os.getenv("POSTGRES_DATABASE")
+    }
 
     return MultiMCPTools(
         [
-            f"npx -y @modelcontextprotocol/server-filesystem {file_path}",
             "npx -y @modelcontextprotocol/server-sequential-thinking",
-        ]
+            "npx -y @feedmob/appsamurai-reporting",
+            f"uv run {os.path.join(current_dir, "mcp_servers", "math_server.py")}",
+            f"uv --directory {os.path.join(current_dir, "mcp_servers", "servers", "feedmob")} run feedmob",
+        ],
+        env=env,
     )

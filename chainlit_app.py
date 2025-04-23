@@ -7,6 +7,23 @@ from agno_agent import create_agno_agent
 
 load_dotenv()
 
+@cl.set_starters
+async def set_starters():
+    return [
+        cl.Starter(
+            label="TextNow <> Jampp 4.10号的 direct spend",
+            message="获取feedmob 中 client = TextNow, vendor = Jampp  4月10 号的 direct spend 数据.",
+        ),
+        cl.Starter(
+            label="appsamurai 昨天的 spend 数据",
+            message="appsamurai 昨天的 spend 数据",
+        ),
+        cl.Starter(
+            label="特斯拉股价",
+            message="请查询一下昨天和今天的特斯拉股价.",
+        )
+    ]
+
 
 @cl.on_chat_start
 async def on_chat_start():
@@ -24,7 +41,7 @@ async def on_message(message: cl.Message):
         # Use arun instead of run for async operation
         response = await agent.arun(message.content)
         print(f"DEBUG - Response type: {type(response)}")
-        
+
         if hasattr(response, 'content'):
             print(f"DEBUG - Content type: {type(response.content)}")
             await cl.Message(content=response.content).send()
