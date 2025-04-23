@@ -1,10 +1,10 @@
 import os
+from pathlib import Path
 from typing import Optional
 
+from agno.tools.mcp import MultiMCPTools
 from fastapi import FastAPI
 from mcp.client.stdio import get_default_environment
-from agno.tools.mcp import MultiMCPTools
-from pathlib import Path
 
 _app: Optional[FastAPI] = None
 
@@ -38,5 +38,6 @@ def create_mcp_client():
     return MultiMCPTools(
         [
             f"npx -y @modelcontextprotocol/server-filesystem {file_path}",
+            "npx -y @modelcontextprotocol/server-sequential-thinking",
         ]
     )
