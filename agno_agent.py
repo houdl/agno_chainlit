@@ -9,6 +9,7 @@ from mcp_client import get_mcp_tools
 from agno.models.openai import OpenAIChat
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.tools.yfinance import YFinanceTools
+from agno.team.team import Team
 
 load_dotenv()
 
@@ -40,3 +41,53 @@ def create_agno_agent(session_id: str):
         markdown=True,
     )
     return agent
+
+
+
+def create_agno_team_agent(session_id: str):
+    model_deepseek = DeepSeek(
+        id="deepseek-ai/DeepSeek-V3",
+        api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
+        base_url=os.environ.get("DEEPSEEK_API_BASE_URL", ""),
+    )
+
+    model_openai = OpenAIChat(id="gpt-4o")
+
+    english_agent = Agent(
+        name="English Agent",
+        role="You only answer in English",
+        model=model_openai,
+    )
+    chinese_agent = Agent(
+        name="Chinese Agent",
+        role="You only answer in Chinese",
+        model=model_deepseek,
+    )
+    french_agent = Agent(
+        name="French Agent",
+        role="You can only answer in French",
+        model=model_openai,
+    )
+
+    multi_language_team = Team(
+        name="Multi Language Team",
+        mode="route",
+        model=model_openai,
+        members=[english_agent, chinese_agent, french_agent],
+        show_tool_calls=True,
+        description="You are a language router that directs questions to the appropriate language agent.",
+        instructions=[
+            "Identify the language of the user's question and direct it to the appropriate language agent.",
+            "If the user asks in a language whose agent is not a team member, respond in English with:",
+            "'I can only answer in the following languages: English, Chinese, French. Please ask your question in one of these languages.'",
+            "Always check the language of the user's input before routing to an agent.",
+            "For unsupported languages like Italian, respond in English with the above message.",
+        ],
+        show_members_responses=True,
+        enable_team_history=True,
+        num_of_interactions_from_history=5,
+        debug_mode=True,
+        markdown=True,
+    )
+
+    return multi_language_team

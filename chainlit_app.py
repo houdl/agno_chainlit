@@ -3,7 +3,7 @@ from typing import Dict, Optional
 import chainlit as cl
 from dotenv import load_dotenv
 
-from agno_agent import create_agno_agent
+from agno_agent import create_agno_agent, create_agno_team_agent
 
 load_dotenv()
 
@@ -25,17 +25,27 @@ async def set_starters():
     ]
 
 
+commands = [
+    {"id": "Team", "icon": "globe", "description": "Find on the Team"},
+]
+
 @cl.on_chat_start
 async def on_chat_start():
+    await cl.context.emitter.set_commands(commands)
     current_user = __current_user()
 
     agent = create_agno_agent(session_id=cl.context.session.id)
+    team_agent = create_agno_team_agent(session_id=cl.context.session.id)
     cl.user_session.set("agent", agent)
+    cl.user_session.set("team_agent", team_agent)
 
 
 @cl.on_message
 async def on_message(message: cl.Message):
-    agent = cl.user_session.get("agent")
+    if message.command == "Team":
+       agent = cl.user_session.get("team_agent")
+    else:
+       agent = cl.user_session.get("agent")
 
     try:
         # Use arun instead of run for async operation
