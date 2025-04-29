@@ -3,7 +3,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { fetchInmobiCampaignMappingsData, fetchDirectSpendsData } from "./api.js";
+import { fetchDirectSpendsData, getInmobiReportIds, checkInmobiReportStatus, getInmobiReports, createDirectSpend } from "./api.js";
 
 // Create server instance
 const server = new McpServer({
@@ -15,24 +15,54 @@ const server = new McpServer({
   },
 });
 
-// Tool Definition for Direct Spends
+// Tool Definition for Creating Direct Spend
+server.tool(
+  "create_direct_spend",
+  "Create Or Update a direct spend via FeedMob API.",
+  {
+    net_spend: z.number().describe("Net spend amount"),
+    click_url_id: z.number().describe("Click URL ID"),
+    spend_date: z.string().describe("Spend date in YYYY-MM-DD format"),
+  },
+  async (params) => {
+    try {
+      const result = await createDirectSpend(
+        params.net_spend,
+        params.click_url_id,
+        params.spend_date
+      );
+      const formattedData = JSON.stringify(result, null, 2);
+      return {
+        content: [{
+          type: "text",
+          text: `Direct spend created successfully:\n\`\`\`json\n${formattedData}\n\`\`\``,
+        }],
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while creating direct spend.";
+      console.error("Error in create_direct_spend tool:", errorMessage);
+      return {
+        content: [{ type: "text", text: `Error creating direct spend: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool Definition for Getting Direct Spends
 server.tool(
   "get_direct_spends",
   "Get direct spends data via FeedMob API.",
   {
-    client_id: z.number().describe("Client ID"),
     start_date: z.string().describe("Start date in YYYY-MM-DD format"),
     end_date: z.string().describe("End date in YYYY-MM-DD format"),
-    vendor_id: z.number().optional().describe("Optional vendor ID"),
-    click_url_ids: z.string().optional().describe("Optional comma-separated click URL IDs"),
+    click_url_ids: z.array(z.string()).describe("Array of click URL IDs"),
   },
   async (params) => {
     try {
       const spendData = await fetchDirectSpendsData(
-        params.client_id,
         params.start_date,
         params.end_date,
-        params.vendor_id,
         params.click_url_ids
       );
       const formattedData = JSON.stringify(spendData, null, 2);
@@ -53,37 +83,105 @@ server.tool(
   }
 );
 
-// Tool Definition
+// Tool Definition for Inmobi Report IDs
 server.tool(
-  "get_inmobi_campaign_mappings",
-  "Get inmobi_campaign_mappings via FeedMob API.",
-  {}, // No input parameters required for this endpoint
-  async () => {
+  "get_inmobi_report_ids",
+  "Get Inmobi report IDs for a date range. next step must use tool check_inmobi_report_id_status to check skan_report_id and non_skan_report_id available",
+  {
+    start_date: z.string().describe("Start date in YYYY-MM-DD format"),
+    end_date: z.string().describe("End date in YYYY-MM-DD format"),
+  },
+  async (params) => {
     try {
-      const spendData = await fetchInmobiCampaignMappingsData();
-      // Format the data nicely for the LLM/user
-      const formattedData = JSON.stringify(spendData, null, 2);
+      const data = await getInmobiReportIds(params.start_date, params.end_date);
+      const formattedData = JSON.stringify(data, null, 2);
       return {
         content: [{
           type: "text",
-          text: `Spend data:\n\`\`\`json\n${formattedData}\n\`\`\``,
+          text: `Inmobi report IDs:\n\`\`\`json\n${formattedData}\n\`\`\``,
         }],
       };
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while fetching campaign mappings.";
-      console.error("Error in get_spend_data tool:", errorMessage);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while fetching Inmobi report IDs.";
+      console.error("Error in get_inmobi_report_ids tool:", errorMessage);
       return {
-        content: [{ type: "text", text: `Error fetching spend data: ${errorMessage}` }],
+        content: [{ type: "text", text: `Error fetching Inmobi report IDs: ${errorMessage}` }],
         isError: true,
       };
     }
   }
 );
 
+// Tool Definition for Checking Report Status
+server.tool(
+  "check_inmobi_report_status",
+  "Check the status of an Inmobi report.",
+  {
+    start_date: z.string().describe("Start date in YYYY-MM-DD format"),
+    end_date: z.string().describe("End date in YYYY-MM-DD format"),
+    report_id: z.string().describe("Report ID to check status for"),
+  },
+  async (params) => {
+    try {
+      const data = await checkInmobiReportStatus(params.start_date, params.end_date, params.report_id);
+      const formattedData = JSON.stringify(data, null, 2);
+      return {
+        content: [{
+          type: "text",
+          text: `Inmobi report status:\n\`\`\`json\n${formattedData}\n\`\`\``,
+        }],
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while checking Inmobi report status.";
+      console.error("Error in check_inmobi_report_status tool:", errorMessage);
+      return {
+        content: [{ type: "text", text: `Error checking Inmobi report status: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// Tool Definition for Getting Reports
+server.tool(
+  "get_inmobi_reports",
+  "Get Inmobi reports data. next step should check direct spend from feedmob",
+  {
+    start_date: z.string().describe("Start date in YYYY-MM-DD format"),
+    end_date: z.string().describe("End date in YYYY-MM-DD format"),
+    skan_report_id: z.string().describe("SKAN report ID"),
+    non_skan_report_id: z.string().describe("Non-SKAN report ID"),
+  },
+  async (params) => {
+    try {
+      const data = await getInmobiReports(
+        params.start_date,
+        params.end_date,
+        params.skan_report_id,
+        params.non_skan_report_id
+      );
+      const formattedData = JSON.stringify(data, null, 2);
+      return {
+        content: [{
+          type: "text",
+          text: `Inmobi reports data:\n\`\`\`json\n${formattedData}\n\`\`\``,
+        }],
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while fetching Inmobi reports.";
+      console.error("Error in get_inmobi_reports tool:", errorMessage);
+      return {
+        content: [{ type: "text", text: `Error fetching Inmobi reports: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+
 // Prompt Definition
 server.prompt(
-  "check_spend_data",
-  "Check spend data through the FeedMob API.",
+  "get_inmobi_reports",
   {},
   () => {
     return {
@@ -91,7 +189,7 @@ server.prompt(
         role: "user",
         content: {
           type: "text",
-          text: "Please retrieve and summarize the spend data.",
+          text: "next step should check direct spend from feedmob",
         }
       }],
     };
