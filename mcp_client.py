@@ -41,6 +41,8 @@ def create_mcp_client():
         "FEEDMOB_KEY": os.getenv("FEEDMOB_KEY"),
         "FEEDMOB_SECRET": os.getenv("FEEDMOB_SECRET"),
         "FEEDMOB_API_BASE": os.getenv("FEEDMOB_API_BASE"),
+        "INMOBI_CLIENT_ID": os.getenv("INMOBI_CLIENT_ID"),
+        "INMOBI_CLIENT_SECRET": os.getenv("INMOBI_CLIENT_SECRET"),
     }
 
     return MultiMCPTools(
@@ -49,7 +51,8 @@ def create_mcp_client():
             "npx -y @feedmob/appsamurai-reporting",
             f"node {os.path.join(current_dir, "mcp_servers", "servers", "feedmob-spend", "dist", "index.js")}",
             f"uv run {os.path.join(current_dir, "mcp_servers", "math_server.py")}",
-            f"uv --directory {os.path.join(current_dir, "mcp_servers", "servers", "feedmob")} run feedmob",
+            # f"uv --directory {os.path.join(current_dir, "mcp_servers", "servers", "feedmob")} run feedmob",
+            f"uv --directory {os.path.join(current_dir, "mcp_servers", "servers", "inmobi")} run inmobi",
             f"uv --directory {os.path.join(current_dir, "mcp_servers", "servers", "jampp")} run jampp",
         ],
         env=env,

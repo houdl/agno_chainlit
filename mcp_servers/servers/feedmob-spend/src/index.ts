@@ -3,7 +3,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { fetchInmobiCampaignMappingsData } from "./api.js";
+import { fetchInmobiCampaignMappingsData, fetchDirectSpendsData } from "./api.js";
 
 // Create server instance
 const server = new McpServer({
@@ -14,6 +14,44 @@ const server = new McpServer({
     prompts: {},
   },
 });
+
+// Tool Definition for Direct Spends
+server.tool(
+  "get_direct_spends",
+  "Get direct spends data via FeedMob API.",
+  {
+    client_id: z.number().describe("Client ID"),
+    start_date: z.string().describe("Start date in YYYY-MM-DD format"),
+    end_date: z.string().describe("End date in YYYY-MM-DD format"),
+    vendor_id: z.number().optional().describe("Optional vendor ID"),
+    click_url_ids: z.string().optional().describe("Optional comma-separated click URL IDs"),
+  },
+  async (params) => {
+    try {
+      const spendData = await fetchDirectSpendsData(
+        params.client_id,
+        params.start_date,
+        params.end_date,
+        params.vendor_id,
+        params.click_url_ids
+      );
+      const formattedData = JSON.stringify(spendData, null, 2);
+      return {
+        content: [{
+          type: "text",
+          text: `Direct spends data:\n\`\`\`json\n${formattedData}\n\`\`\``,
+        }],
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while fetching direct spends data.";
+      console.error("Error in get_direct_spends tool:", errorMessage);
+      return {
+        content: [{ type: "text", text: `Error fetching direct spends data: ${errorMessage}` }],
+        isError: true,
+      };
+    }
+  }
+);
 
 // Tool Definition
 server.tool(

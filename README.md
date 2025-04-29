@@ -10,6 +10,8 @@ uv sync
 use node version 18 from .nvmrc
 ```
 nvm use
+
+cd mcp_servers/servers/feedmob-spend && npm run build
 ```
 
 2. Set up environment variables:
