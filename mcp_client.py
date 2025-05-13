@@ -49,6 +49,7 @@ def create_mcp_client():
         [
             "npx -y @modelcontextprotocol/server-sequential-thinking",
             "npx -y @feedmob/appsamurai-reporting",
+            # "npx -y @feedmob/feedmob-reporting",
             f"node {os.path.join(current_dir, "mcp_servers", "servers", "feedmob-spend", "dist", "index.js")}",
             f"uv run {os.path.join(current_dir, "mcp_servers", "math_server.py")}",
             # f"uv --directory {os.path.join(current_dir, "mcp_servers", "servers", "feedmob")} run feedmob",
