@@ -15,13 +15,13 @@ load_dotenv()
 
 
 def create_agno_agent(session_id: str):
-    # model = DeepSeek(
-    #     id="deepseek-ai/DeepSeek-V3",
-    #     api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
-    #     base_url=os.environ.get("DEEPSEEK_API_BASE_URL", ""),
-    # )
+    model = DeepSeek(
+        id="deepseek-ai/DeepSeek-R1",
+        api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
+        base_url=os.environ.get("DEEPSEEK_API_BASE_URL", ""),
+    )
 
-    model = OpenAIChat(id="gpt-4o")
+    # model = OpenAIChat(id="gpt-4o")
 
     mcp_tools = get_mcp_tools()
     print(mcp_tools)
@@ -46,17 +46,17 @@ def create_agno_agent(session_id: str):
 
 def create_agno_team_agent(session_id: str):
     model_deepseek = DeepSeek(
-        id="deepseek-ai/DeepSeek-V3",
+        id="deepseek-ai/DeepSeek-R1",
         api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
         base_url=os.environ.get("DEEPSEEK_API_BASE_URL", ""),
     )
 
-    model_openai = OpenAIChat(id="gpt-4o")
+    # model_openai = OpenAIChat(id="gpt-4o")
 
     english_agent = Agent(
         name="English Agent",
         role="You only answer in English",
-        model=model_openai,
+        model=model_deepseek,
     )
     chinese_agent = Agent(
         name="Chinese Agent",
@@ -66,13 +66,13 @@ def create_agno_team_agent(session_id: str):
     french_agent = Agent(
         name="French Agent",
         role="You can only answer in French",
-        model=model_openai,
+        model=model_deepseek,
     )
 
     multi_language_team = Team(
         name="Multi Language Team",
         mode="route",
-        model=model_openai,
+        model=model_deepseek,
         members=[english_agent, chinese_agent, french_agent],
         show_tool_calls=True,
         description="You are a language router that directs questions to the appropriate language agent.",
